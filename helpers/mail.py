@@ -54,6 +54,7 @@ class Email:
         filter_mode = config('Filter-Mode', None)
         if filter_mode:
             # If we have any filters, assume message shouldn't be sent
+            send = False
             if filter_mode == 'blacklist':
                 # Retrieve a comma-separate list of disallowed text
                 disallowed_text = config('blacklist').split(',')
