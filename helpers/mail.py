@@ -57,7 +57,7 @@ class Email:
             send = False
             if filter_mode == 'blacklist':
                 # Retrieve a comma-separate list of disallowed text
-                disallowed_text = config('blacklist').split(',')
+                disallowed_text = config('blacklist', cast=Csv(cast=lambda x: x.lower(), strip=' %*'))
                 for text in disallowed_text:
                     # If any of the disallowed phrases are in the links, do not send the message
                     if text in body:
@@ -65,7 +65,7 @@ class Email:
                         break
             else:
                 # Retrieve a comma-separate list of disallowed text
-                allowed_text = config('whitelist').split(',')
+                allowed_text = config('whitelist', cast=Csv(cast=lambda x: x.lower(), strip=' %*'))
                 for text in allowed_text:
                     # If any of the allowed phrases are in the message content, send the message
                     if text in body:
