@@ -7,13 +7,13 @@ from decouple import config, Csv
 from webwhatsapi.async_driver import WhatsAPIDriverAsync
 from webwhatsapi.objects.message import Message
 
+from helpers import check_filter, get_links
 from helpers.DB import DB
 from helpers.telegram import Telegram
 
 
 class Whatsapp:
     def __init__(self, loop):
-        self._links_to_check = config('Links-to-Check', cast=Csv(strip=' %*', cast=lambda x: x.lower()))
         self._loop = loop
         self._db = DB()
         self._driver = None
@@ -44,7 +44,6 @@ class Whatsapp:
         await asyncio.wait([task1], loop=self._loop)
 
     async def monitor_messages(self):
-        print(self._links_to_check)
         print("Connecting...")
         await self._driver.connect()
         print("Wait for login...")
@@ -73,50 +72,10 @@ class Whatsapp:
                                 name = message.sender.get_safe_name()
                             chat = shit['chat']['contact']['formattedName']
 
-                            url_regex = compile(
-                                r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-                            )
-                            links_to_search = compile(f".*({'|'.join(self._links_to_check)}).+")
-
-                            # get all links in the message that we are checking for
-                            links = set(
-                                sub(r"(<.+>|<|>)", "", x)
-                                for x in url_regex.findall(message.content)
-                                if links_to_search.match(x.lower())
-                            )
-
                             # By default, message should be sent
-                            send: bool = True
-                            if links:
-                                filter_mode = config('Filter-Mode', None)
-                                if filter_mode:
-                                    # If we have any filters, assume message shouldn't be sent
-                                    send = False
-                                    if filter_mode == 'blacklist':
-                                        # Retrieve a comma-separate list of disallowed text
-                                        disallowed_text = config(
-                                            'blacklist', cast=Csv(cast=lambda x: x.lower(), strip=' %*')
-                                        )
-                                        for text in disallowed_text:
-                                            # If any of the disallowed phrases are in the message content, do not send the message
-                                            if text in message.content:
-                                                send = False
-                                                break
-                                        else:
-                                            send = True
-                                    else:
-                                        # Retrieve a comma-separate list of disallowed text
-                                        allowed_text = config(
-                                            'whitelist', cast=Csv(cast=lambda x: x.lower(), strip=' %*')
-                                        )
-                                        for text in allowed_text:
-                                            # If any of the allowed phrases are in the message content, send the message
-                                            if text in message.content:
-                                                send = True
-                                                break
+                            if get_links(message.content) and not check_filter(message.content):
                                 try:
-                                    if send:
-                                        self._tg.log_link(chat, name, message.content)
+                                    self._tg.log_link(chat, name, message.content)
                                 except Exception as e:
                                     self._tg.log_message(
                                         f"New invite link failed to deliver!, Check phone asap | error log_message = {e}"
