@@ -1,9 +1,7 @@
 import asyncio
 import os
-from re import compile, sub
 from signal import SIGINT
 
-from decouple import config, Csv
 from webwhatsapi.async_driver import WhatsAPIDriverAsync
 from webwhatsapi.objects.message import Message
 

@@ -1,7 +1,7 @@
 from email import message_from_bytes
 from email.header import decode_header
 from imaplib import IMAP4_SSL
-from re import compile, sub
+from re import sub, findall, DOTALL
 from time import sleep
 from traceback import print_exc
 from typing import List, Set
@@ -50,6 +50,15 @@ class Email:
         if check_filter(body) or check_filter(self.subject):
             self.links = set()
         else:
+            # remove all quoted messages and footers to get just the message content
+            body = sub(
+                r"On (Mon|Tue|Wed|Thu|Fri|Sat|Sun), (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d+, \d+ at \d+:\d+ [AP]M [\w\s]+ <.+@.+> wrote:.*",
+                "",
+                body,
+                flags=DOTALL,
+            )
+            body = body.split("--")[0]
+
             # get all needed links from body
             self.links: Set[str] = get_links(body)
 

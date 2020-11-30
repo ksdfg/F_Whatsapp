@@ -5,7 +5,6 @@ from argparse import ArgumentParser
 from helpers.mail import MailService
 from helpers.wp import Whatsapp
 
-
 if __name__ == '__main__':
     parser = ArgumentParser(description="Fetch meeting links and log them to telegram")
     group = parser.add_mutually_exclusive_group(required=True)
