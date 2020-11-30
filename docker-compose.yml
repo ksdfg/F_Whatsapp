@@ -25,7 +25,7 @@ services:
       - SELENIUM=http://firefox:4444/wd/hub
 
     volumes:
-      - ./cached-packages:/usr/local/lib/f_whatsapp/python/site-packages/
+      - .:/app
       - ./qrs:/tmp
     networks:
       - selenium
