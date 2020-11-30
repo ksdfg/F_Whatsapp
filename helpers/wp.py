@@ -46,24 +46,35 @@ class Whatsapp:
     async def monitor_messages(self):
         print("Connecting...")
         await self._driver.connect()
-        print("Wait for login...")
+
         # get qr code
+        print("Checking for login...")
         login_status = await self._driver.wait_for_login()
         if not login_status:
             filepath = await self._driver.get_qr()
             print("The QR is at", filepath.replace("/tmp", "qrs"))
+
         # wait for user to login
+        tries = 0
         while not login_status:
             print("Wait for login...")
             login_status = await self._driver.wait_for_login()
+            if tries > 30:
+                raise Exception("Couldn't login")
+            else:
+                tries += 1
+
         await self._driver.save_firefox_profile(remove_old=True)
         self._db.add_json()
+
         while True:
             try:
                 print("Checking for more messages, status", await self._driver.get_status())
+
                 for cnt in await self.get_unread_messages():
                     if self.is_cancelled:
                         break
+
                     for message in cnt.messages:
                         if isinstance(message, Message):
                             shit = message.get_js_obj()
@@ -80,6 +91,7 @@ class Whatsapp:
                                     self._tg.log_message(
                                         f"New invite link failed to deliver!, Check phone asap | error log_message = {e}"
                                     )
+
             except Exception as e:
                 print(e)
                 continue

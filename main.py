@@ -14,9 +14,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logging.basicConfig(format="%(asctime)s: %(message)s", level=logging.INFO, datefmt="%H:%M:%S")
-    loop = asyncio.get_event_loop()
 
     if args.whatsapp:
+        loop = asyncio.get_event_loop()
         wp = Whatsapp(loop)
         loop.run_until_complete(wp.start())
     elif args.mail:
