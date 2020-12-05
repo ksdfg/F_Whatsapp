@@ -130,4 +130,4 @@ class MailService:
                     )
                     print_exc()
 
-            sleep(3)
+            sleep(7)
