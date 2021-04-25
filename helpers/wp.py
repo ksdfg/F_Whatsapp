@@ -83,7 +83,7 @@ class Whatsapp:
 
                             # By default, message should be sent
                             newline = "\n"
-                            if links := get_links(message.content) and not check_filter(message.content):
+                            if (links := get_links(message.content)) and not check_filter(message.content):
                                 try:
                                     self._tg.log_link(chat, name, f"{newline.join(links)}\n\n---\n\n{message.content}")
                                 except Exception as e:
