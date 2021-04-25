@@ -48,10 +48,17 @@ def get_links(message: str) -> Set[str]:
     :param message: message body
     :return: set of all the meeting links in the message body
     """
-    url_regex = compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+%]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+    url_regex = compile(r"(?:[a-zA-Z]|[0-9]|[$-_@.&+%]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
     links_to_check = config('Links-to-Check', cast=Csv(cast=lambda x: x.lower(), strip=' %*'))
+    safe_link = compile(r"^http[s]?://.+")
     meeting_regex = compile(f"^http[s]?://(?!www.google.com).*({'|'.join(links_to_check)}).+")
 
-    links = set(sub(r"(<.+>.*|<|>)", "", url) for url in url_regex.findall(message) if meeting_regex.match(url.lower()))
+    links = set()
+    for url in url_regex.findall(message):
+        url = sub(r"(<.+>.*|<|>)", "", url)
+        if not safe_link.match(url.lower()):
+            url = "https://" + url
+        if meeting_regex.match(url.lower()):
+            links.add(url)
 
     return links

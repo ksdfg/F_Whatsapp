@@ -82,9 +82,10 @@ class Whatsapp:
                             chat = shit['chat']['contact']['formattedName']
 
                             # By default, message should be sent
-                            if get_links(message.content) and not check_filter(message.content):
+                            newline = "\n"
+                            if links := get_links(message.content) and not check_filter(message.content):
                                 try:
-                                    self._tg.log_link(chat, name, message.content)
+                                    self._tg.log_link(chat, name, f"{newline.join(links)}\n\n---\n\n{message.content}")
                                 except Exception as e:
                                     self._tg.log_message(
                                         f"New invite link failed to deliver!, Check phone asap | error log_message = {e}"
