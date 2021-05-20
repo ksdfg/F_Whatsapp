@@ -1,7 +1,8 @@
+import logging
 from email import message_from_bytes
 from email.header import decode_header
-from imaplib import IMAP4_SSL
-from re import sub, findall, DOTALL
+from imaplib import IMAP4_SSL, IMAP4
+from re import sub, DOTALL
 from time import sleep
 from traceback import print_exc
 from typing import List, Set
@@ -73,7 +74,7 @@ class MailService:
         self._links_to_check = config('Links-to-Check', cast=Csv(strip=' %*'))
 
         self._service = IMAP4_SSL(config('Email-IMAP'))
-        status, _ = self._service.login(config('Email-ID'), config('Email-Password'))  # login
+        self._service.login(config('Email-ID'), config('Email-Password'))  # login
 
     def _get_new_meetings(self) -> List[Email]:
         """
@@ -81,30 +82,42 @@ class MailService:
         :return: List of all unread email objects
         """
         # fetch unread emails
-        print("fetching unread mails")
-        self._service.select('inbox')
-        status, mail_ids = self._service.search(None, '(UNSEEN)')
+        try:
+            print("fetching unread mails")
+            self._service.select('inbox')
+            status, mail_ids = self._service.search(None, '(UNSEEN)')
 
-        # format all mails into Email objects
-        mails = []  # list of all mails to be logged
-        all_mails = mail_ids[0].decode('utf-8').split()  # list of all unread mails
-        for n, mail_id in enumerate(all_mails):
-            # fetch the mail
-            print(f"fetching mail {n+1}/{len(all_mails)}")
-            status, mail_content = self._service.fetch(mail_id, '(RFC822)')
-            if status != "OK":
-                continue
+            # format all mails into Email objects
+            mails = []  # list of all mails to be logged
+            all_mails = mail_ids[0].decode('utf-8').split()  # list of all unread mails
+            for n, mail_id in enumerate(all_mails):
+                # fetch the mail
+                print(f"fetching mail {n+1}/{len(all_mails)}")
+                status, mail_content = self._service.fetch(mail_id, '(RFC822)')
+                if status != "OK":
+                    continue
 
-            for content in mail_content:
-                if isinstance(content, tuple):
-                    email = Email(content[1])
-                    if email.links:
-                        mails.append(email)
-                    else:
-                        # mark the mail as unread
-                        self._service.store(mail_id, '-FLAGS', r'\SEEN')
+                for content in mail_content:
+                    if isinstance(content, tuple):
+                        email = Email(content[1])
+                        if email.links:
+                            mails.append(email)
+                        else:
+                            # mark the mail as unread
+                            self._service.store(mail_id, '-FLAGS', r'\SEEN')
 
-        return mails
+            return mails
+
+        except IMAP4.abort as e:
+            logging.error(e)
+            # close existing service and start new one
+            self._service.close()
+            self._service = IMAP4_SSL(config('Email-IMAP'))
+            self._service.login(config('Email-ID'), config('Email-Password'))  # login
+
+        except Exception as e:
+            logging.error(e)
+            return []
 
     def log_new_meetings(self):
         """
