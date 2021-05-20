@@ -21,7 +21,7 @@ ExecStartPre=-/bin/bash -c 'docker ps -aqf "name=%i_*" | xargs docker rm'
 ExecStartPre=/usr/bin/docker build -t meetings-channel .
 
 # Compose up
-ExecStart=/usr/local/bin/docker-compose up --remove-orphans --abort-on-container-exit
+ExecStart=/usr/local/bin/docker-compose up --remove-orphans --detach
 
 # Compose down, remove containers, untagged images and volumes
 ExecStop=/usr/local/bin/docker-compose down -v --remove-orphans

@@ -24,6 +24,10 @@ services:
     environment:
       - SELENIUM=http://firefox:4444/wd/hub
 
+    deploy:
+      restart_policy:
+        condition: on-failure
+
     volumes:
       - .:/app
       - ./qrs:/tmp
@@ -38,6 +42,10 @@ services:
 
     image: meetings-channel
     command: python -u main.py --mail
+
+    deploy:
+      restart_policy:
+        condition: on-failure
 
 volumes:
   devshm:
